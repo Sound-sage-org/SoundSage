@@ -24,7 +24,7 @@ function App() {
     return(
       <div>
         <Header/>
-        <Loading/>
+        <Loading setIsProcessing = {setIsProcessing}/>
       </div>
     )
   }

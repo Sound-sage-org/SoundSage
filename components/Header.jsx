@@ -3,8 +3,8 @@ const Header = ()=>{
         <div className=" rounded-md mt-0 ">
 
             <div className="flex cursor-pointer m-2 relative">
-                <img src="Untitled design.png" className="w-25 h-25 m-0"/> 
-                <p className="oi-font text-3xl pt-6">SoundSage</p>
+                <img src="SoundSage.png" className="w-25 h-25 m-0"/> 
+                <p className="oi-font text-3xl pt-8">SoundSage</p>
             </div>
             <br/>
             <div className="w-screen flex justify-center">

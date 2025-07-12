@@ -4,7 +4,7 @@
 @tailwind utilities;
 /* Optional extra hard reset */
 /* index.css */
-html, body {
+html, body , #root{
   margin: 0;
   padding: 0;
   overflow: hidden; /* optional: prevent horizontal scroll */
@@ -18,3 +18,27 @@ html, body {
 .outfit-font {
   font-family: 'Outfit', cursive;
 }
+
+
+/* Scrollbar styles */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent; /* Make track transparent */
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(96, 165, 250, 0.7); /* Semi-transparent blue thumb */
+  border-radius: 10px;
+  border: 2px solid transparent; /* Optional: for spacing around thumb */
+  background-clip: content-box;
+}
+
+/* For Firefox */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(96, 165, 250, 0.7) transparent; /* Thumb / Track */
+}
+

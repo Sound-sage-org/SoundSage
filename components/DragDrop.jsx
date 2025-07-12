@@ -25,7 +25,7 @@ const DragDrop = ({setIsFileGiven , setIsProcessing}) => {
   const handleDragOver = (e) => {
     e.preventDefault();
   };
-  useEffect(() => {
+  useEffect(async () => {
     if (audioFiles && audioFiles.length > 0) {
       setIsFileGiven(true);
 
