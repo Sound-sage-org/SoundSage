@@ -1,27 +1,49 @@
+#pipeline:
+#get audio array -> detect onsets -> remove duplicate onsets -> extract segments -> convert to mel spectrograms -> prediction
+#after prediction -> get audio end times -> get velocities -> convert to midi
+
 import os
 import numpy as np
 import librosa
 import soundfile as sf
 import tensorflow as tf
-from madmom.features.onsets import OnsetPeakPickingProcessor, OnsetDetection
 from scipy.io import wavfile
+import noisereduce as nr
+import matplotlib.pyplot as plt
+import pretty_midi
+# from madmom.features.onsets import OnsetPeakPickingProcessor, OnsetDetection
 
-# Load model
-model = tf.keras.models.load_model("best_model.keras")
+def show_preprocessed_mel(mel, sr=16000, hop_length=512):
+    plt.figure(figsize=(6, 3))
+    plt.imshow(mel.squeeze(), origin='lower', aspect='auto', cmap='magma')
+    plt.title("Preprocessed Mel Spectrogram")
+    plt.xlabel("Time frames")
+    plt.ylabel("Mel bins")
+    plt.colorbar(label='Normalized Power (0-1)')
+    plt.tight_layout()
+    plt.show()
 
-# Convert to WAV and 16kHz mono
-def convert_to_wav(input_path, output_path, target_sr=16000):
+def get_audio_array(input_path, output_path, target_sr=16000):
     y, sr = librosa.load(input_path, sr=target_sr, mono=True)
-    sf.write(output_path, y, target_sr)
+    y_denoised = nr.reduce_noise(y=y, sr=sr)
+    # print(len(y_denoised))
+    sf.write(output_path, y_denoised, target_sr)
 
-# Detect onsets using madmom
 def detect_onsets(wav_path):
-    odf = OnsetDetection(wav_path)
-    proc = OnsetPeakPickingProcessor(threshold=0.5, fps=100)
-    onsets = proc(odf)
-    return onsets  # in seconds
+    y, sr = librosa.load(wav_path, sr=16000)
+    onsets = librosa.onset.onset_detect(y=y, sr=sr, units='time', backtrack=True)
+    # print(onsets)
+    return onsets
 
-# Extract fixed-length audio chunks from onsets
+def remove_duplicate_onsets(onsets, min_gap=0.05):
+    filtered = []
+    last = -np.inf
+    for t in onsets:
+        if t - last > min_gap:
+            filtered.append(t)
+            last = t
+    return np.array(filtered)
+
 def extract_segments(y, sr, onsets):
     segments = []
     for i, t in enumerate(onsets):
@@ -37,11 +59,10 @@ def extract_segments(y, sr, onsets):
 
         segment = y[start:end]
         # if len(segment) > int(0.1 * sr):  # Optional: skip very tiny segments
-        #     segments.append(segment)
-
+        segments.append(segment)
+    # print(segments)
     return segments
 
-# Convert audio to mel spectrogram
 def audio_to_mel(audio, sr=16000, n_fft=2048, hop_length=256, n_mels=128, target_frames=24):
     audio = librosa.util.normalize(audio)
     mel = librosa.feature.melspectrogram(y=audio, sr=sr, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
@@ -51,16 +72,19 @@ def audio_to_mel(audio, sr=16000, n_fft=2048, hop_length=256, n_mels=128, target
         mel_db = np.pad(mel_db, ((0, 0), (0, target_frames - mel_db.shape[1])), mode='constant')
     else:
         mel_db = mel_db[:, :target_frames]
+
+    # show_preprocessed_mel(mel_db)
     return mel_db.astype(np.float32)
 
-# Predict from file
 def predict_from_audio(input_audio_path):
     temp_wav = "temp.wav"
-    convert_to_wav(input_audio_path, temp_wav)
+    get_audio_array(input_audio_path, temp_wav)
     y, sr = librosa.load(temp_wav, sr=16000)
     onsets = detect_onsets(temp_wav)
-
+    onsets = remove_duplicate_onsets(onsets)
     segments = extract_segments(y, sr, onsets)
+    if len(segments) == 0:
+        return [],[]
     mels = [audio_to_mel(seg, sr) for seg in segments]
     mels = np.array(mels)[..., np.newaxis]  # shape (N, 128, 24, 1)
 
@@ -69,9 +93,77 @@ def predict_from_audio(input_audio_path):
     offset_labels = np.argmax(offset_preds, axis=1)
 
     pitches = octave_labels * 12 + offset_labels
-    return pitches, onsets
+    return y, sr, pitches, onsets
 
-# predict_from_audio("test.mp3")
+def detect_note_durations_and_velocities(audio, sr, onsets, pitches, max_duration=1.0, threshold_ratio=0.3, hop_length=512, gain_factor=8.5):
+    audio = librosa.util.normalize(audio)
+
+    rms = librosa.feature.rms(y=audio, frame_length=2048, hop_length=hop_length).flatten()
+    total_frames = len(rms)
+    max_frames = int(max_duration * sr / hop_length)
+
+    durations = []
+    velocities = []
+
+    for i, onset_time in enumerate(onsets):
+        onset_frame = librosa.time_to_frames(onset_time, sr=sr, hop_length=hop_length)
+        pitch = pitches[i]
+
+        if onset_frame >= total_frames:
+            durations.append(0.1)
+            velocities.append(1)
+            continue
+
+        peak = rms[onset_frame]
+        if peak <= 0:
+            peak = 1e-6
+        log_rms = np.log1p(peak)
+
+        pitch_bias = 1.5 if pitch < 40 else (1.2 if pitch < 55 else 1.0)
+
+        velocity = int(min(127, max(70, log_rms * 127 * gain_factor * pitch_bias)))
+
+        note_duration = max_duration
+        for j in range(max_frames):
+            idx = onset_frame + j
+            if idx >= total_frames:
+                break
+            if rms[idx] < threshold_ratio * peak:
+                note_duration = j * hop_length / sr
+                break
+
+        if note_duration < 0.05:
+            continue
+
+        durations.append(note_duration)
+        velocities.append(velocity)
+
+    return durations, velocities
+
+def generate_midi(file_path, output_path="output.mid", program=0):
+    y, sr, pitches, onsets = predict_from_audio(file_path)
+    durations, velocities = detect_note_durations_and_velocities(y, sr, onsets, pitches)
+
+    pm = pretty_midi.PrettyMIDI()
+    instrument = pretty_midi.Instrument(program=program)
+
+    for pitch, onset, duration, velocity in zip(pitches, onsets, durations, velocities):
+        midi_pitch = int(np.clip(pitch + 21, 21, 108))
+
+        note = pretty_midi.Note(
+            velocity=velocity,
+            pitch=midi_pitch,
+            start=onset,
+            end=onset + duration
+        )
+        instrument.notes.append(note)
+
+    pm.instruments.append(instrument)
+    pm.write(output_path)
 
 
+model = tf.keras.models.load_model("prediction_model\\best_model.keras")
 
+# for testing:
+# if __name__ == "__main__":
+#     generate_midi("backend\\test2.wav")
