@@ -1,8 +1,7 @@
 import { useState  , useEffect} from "react";
 
-const DragDrop = ({setIsFileGiven , setIsProcessing}) => {
-  const [audioFiles, setAudioFiles] = useState(null);
-  const [audioData , setAudioData] = useState(null);
+const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles , audioData , setAudioData}) => {
+
   useEffect(() => {
     if (audioFiles) {
       setIsFileGiven(true);

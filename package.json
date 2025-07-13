@@ -12,6 +12,7 @@
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@tailwindcss/vite": "^4.1.11",
+    "@tonejs/midi": "^2.0.28",
     "p5": "^2.0.3",
     "radix-ui": "^1.4.2",
     "react": "^19.1.0",
