@@ -9,7 +9,7 @@ const Output  = ()=>{
     const [instrument , setInstrument] = useState(null)
     return(
         <div className="flex justify-between items-center h-100   p-2 mt-5 w-screen">
-                <div className="w-[55%] h-full bg-gray-300  overflow-y-scroll overflow-x-scroll  border-2 custom-scrollbar  rounded-xl">
+                <div className="w-[55%] h-full bg-gray-300  overflow-y-scroll overflow-x-scroll  border-1 custom-scrollbar  rounded-xl">
                     <SoundBox/>
                 </div>
                 <div className="flex justify-center h-96">

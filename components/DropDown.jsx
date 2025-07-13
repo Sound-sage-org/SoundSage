@@ -19,10 +19,10 @@ const DropDown = ({instrument , setInstrument}) => {
           <Dropdown.Item eventKey="Keyboard" className={`w-full m-1 ${instrument==='Keyboard' ? 'bg-gray-200':''}`}>Keyboard</Dropdown.Item>
           <Dropdown.Item eventKey="Organ" className={`w-full m-1 ${instrument==='Organ' ? 'bg-gray-200':''}`}>Organ</Dropdown.Item>
           <Dropdown.Item eventKey="String" className={`w-full m-1 ${instrument==='String' ? 'bg-gray-200':''}`}>String</Dropdown.Item>
-          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Violin' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
-          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Violin' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
-          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Violin' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
-          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Violin' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
+          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Vocal' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
+          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Vocal' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
+          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Vocal' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
+          <Dropdown.Item eventKey="Vocal" className={`w-full m-1 ${instrument==='Vocal' ? 'bg-gray-200':''}`}>Vocal</Dropdown.Item>
 
         </Dropdown>
       </div>

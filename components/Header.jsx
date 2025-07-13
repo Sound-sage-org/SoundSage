@@ -9,7 +9,7 @@ const Header = ()=>{
             <br/>
             <div className="w-screen flex justify-center">
             <div className="max-w-3xl text-center">
-                    <p class=" outfit-font text-xl  text-gray-700">
+                    <p className=" outfit-font text-xl  text-gray-700">
                     Sound Sage is an AI-powered tool that takes your audio, identifies the musical notes being played, and replays them using a different instrument. Whether it's converting a guitar riff to piano or a violin solo to saxophone, Sound Sage transforms your sound while keeping the music intact — all in real time.
                     </p>
 
