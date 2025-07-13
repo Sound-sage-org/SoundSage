@@ -13,7 +13,19 @@
     <link href="https://fonts.googleapis.com/css2?family=Oi&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="root" class="w-screen m-0 p-0 h-screen bg-gradient-to-br from-sky-200 to-indigo-200 "></div>
+    <div id="root" class="w-screen m-0 p-0 h-screen  "></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script src="three.r134.min.js"></script>
+<script src="vanta.clouds.min.js"></script>
+<script>
+  VANTA.CLOUDS({
+    el: document.getElementById("root"),
+    mouseControls: true,
+    touchControls: true,
+    gyroControls: false,
+    minHeight: 200.00,
+    minWidth: 200.00
+  })
+</script>
   </body>
 </html>
