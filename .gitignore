@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 venv310/
+
+dataset_stored/

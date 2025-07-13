@@ -3,6 +3,7 @@
 #after prediction -> get audio end times -> get velocities -> convert to midi
 
 import os
+import uuid
 import numpy as np
 import librosa
 import soundfile as sf
@@ -76,7 +77,7 @@ def audio_to_mel(audio, sr=16000, n_fft=2048, hop_length=256, n_mels=128, target
     # show_preprocessed_mel(mel_db)
     return mel_db.astype(np.float32)
 
-def predict_from_audio(input_audio_path):
+def predict_from_audio(input_audio_path, model):
     temp_wav = "temp.wav"
     get_audio_array(input_audio_path, temp_wav)
     y, sr = librosa.load(temp_wav, sr=16000)
@@ -140,8 +141,8 @@ def detect_note_durations_and_velocities(audio, sr, onsets, pitches, max_duratio
 
     return durations, velocities
 
-def generate_midi(file_path, output_path="output.mid", program=0):
-    y, sr, pitches, onsets = predict_from_audio(file_path)
+def generate_midi(file_path, model, output_dir="midi_output", program=0):
+    y, sr, pitches, onsets = predict_from_audio(file_path, model)
     durations, velocities = detect_note_durations_and_velocities(y, sr, onsets, pitches)
 
     pm = pretty_midi.PrettyMIDI()
@@ -159,10 +160,13 @@ def generate_midi(file_path, output_path="output.mid", program=0):
         instrument.notes.append(note)
 
     pm.instruments.append(instrument)
+
+    os.makedirs(output_dir, exist_ok=True)
+    output_filename = f"{uuid.uuid4().hex}.mid"
+    output_path = os.path.join(output_dir, output_filename)
+    
     pm.write(output_path)
-
-
-model = tf.keras.models.load_model("prediction_model\\best_model.keras")
+    return output_path
 
 # for testing:
 # if __name__ == "__main__":
