@@ -78,7 +78,7 @@ def audio_to_mel(audio, sr=16000, n_fft=2048, hop_length=256, n_mels=128, target
     return mel_db.astype(np.float32)
 
 def predict_from_audio(input_audio_path, model):
-    temp_wav = "temp.wav"
+    temp_wav = "backend\\temporary_audio_files\\temp.wav"
     get_audio_array(input_audio_path, temp_wav)
     y, sr = librosa.load(temp_wav, sr=16000)
     onsets = detect_onsets(temp_wav)

@@ -26,3 +26,7 @@ dist-ssr
 venv310/
 
 dataset_stored/
+
+backend/temporary_audio_files
+
+midi_output

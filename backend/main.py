@@ -1,5 +1,5 @@
 from fastapi import FastAPI, UploadFile, File
-from process_file import *
+from backend.process_file import *
 import shutil
 import uuid
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,7 +21,7 @@ app.state.model = tf.keras.models.load_model("prediction_model/best_model.keras"
 @app.post("/upload")
 async def upload_file(request:Request, file: UploadFile = File(...)):
     # Save to a temp file
-    temp_filename = f"temp_{uuid.uuid4().hex}.wav"
+    temp_filename = f"backend\\temporary_audio_files\\temp_{uuid.uuid4().hex}.wav"
     with open(temp_filename, "wb") as buffer:
         shutil.copyfileobj(file.file, buffer)
 
