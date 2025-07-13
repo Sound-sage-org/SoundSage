@@ -1,4 +1,5 @@
 import { useState  , useEffect} from "react";
+import Upload from "../utils/upload.js";
 
 const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles , audioData , setAudioData}) => {
 
@@ -11,14 +12,12 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     const audioOnly = files.filter(file => file.type.startsWith("audio/"));
-
+    console.log(files)
     if (audioOnly.length === 0) {
-      alert("ma ka pakoda teri !");
       return;
     }
 
     setAudioFiles(audioOnly);
-    console.log(audioOnly)
   };
 
   const handleDragOver = (e) => {
@@ -34,7 +33,9 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
         const audioBase64 = e.target.result;
         setAudioData(audioBase64);
         console.log("Base64 audio data:", audioBase64);
+        Upload(audioBase64)
       };
+      
       reader.readAsDataURL(audioFiles[0]);
       setIsProcessing(true) 
       setTimeout(()=>{

@@ -13,6 +13,7 @@ function App() {
   const [isProcessing , setIsProcessing ] = useState(false)
   const [audioFiles, setAudioFiles] = useState(null);
   const [audioData , setAudioData] = useState(null);
+  const [instrument , setInstrument] = useState('Select an option')
   if(!isProcessing && !isFileGiven){
     return (
       <>
