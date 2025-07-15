@@ -59,24 +59,27 @@ export const AudioInput = async (midiUrl , instrument , setLIGHTARR) => {
         const pitch = note.pitch;
         setLIGHTARR((prev) => {
             if (!prev.includes(pitch)) {
-                return [...prev, {name: pitch, duration: note.duration}];
+                return [...prev, {name: pitch, duration: note.duration*1000}];
             }
             return prev;
         })
     });
     const Instrument = instrument == "Select an option" ? "acoustic_grand_piano" : instrument;
+    const urls = await getValidSamplerUrls(`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}-mp3/`)
     const Sampler = new Tone.Sampler({
-        urls: getValidSamplerUrls(`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}-mp3/`),
-        baseUrl:`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}/`,
+        urls: urls,
+        baseUrl:`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}-mp3/`,
         release:1
     }).toDestination();
+
+    const now = Tone.now()
     Tone.loaded().then(()=>{
         song_arr.forEach((note) => {
             const time = note.time;
             const duration = note.duration;
             const pitch = note.pitch;
             const velocity = note.velocity;
-            Sampler.triggerAttackRelease(pitch, duration, time, velocity);
+            Sampler.triggerAttackRelease(pitch, duration, now+time, velocity);
         });
     })
 };

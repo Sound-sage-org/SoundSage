@@ -32,3 +32,5 @@ backend/temporary_audio_files
 midi_output
 
 backend/__pycache__
+
+plots/

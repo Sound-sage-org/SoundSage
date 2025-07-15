@@ -6,13 +6,54 @@ import os
 import uuid
 import numpy as np
 import librosa
+import librosa.display
 import soundfile as sf
 import tensorflow as tf
 from scipy.io import wavfile
 import noisereduce as nr
 import matplotlib.pyplot as plt
 import pretty_midi
+from scipy.ndimage import median_filter
 # from madmom.features.onsets import OnsetPeakPickingProcessor, OnsetDetection
+
+def plot_onsets(y, sr, onsets, save_path="plots/onsets.png"):
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    
+    plt.figure(figsize=(10, 3))
+    librosa.display.waveshow(y, sr=sr)
+    for o in onsets:
+        plt.axvline(x=o, color='r', linestyle='--')
+    plt.title("Detected Onsets")
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
+
+def plot_onset_diagnostics(y, sr , onsets, save_path="plots/onset_diagnostics.png"):
+    hop_length = 256
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+    times = librosa.times_like(onset_env, sr=sr, hop_length=hop_length)
+
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+
+    fig, ax = plt.subplots(2, 1, figsize=(12, 6), sharex=True)
+
+    # Waveform plot
+    librosa.display.waveshow(y, sr=sr, ax=ax[0])
+    for onset in onsets:
+        ax[0].axvline(x=onset, color='r', linestyle='--')
+    ax[0].set_title('Waveform with Detected Onsets')
+
+    # Onset strength plot
+    ax[1].plot(times, onset_env, label='Onset Strength Envelope')
+    for onset in onsets:
+        ax[1].axvline(x=onset, color='r', linestyle='--')
+    ax[1].legend()
+    ax[1].set_title('Onset Strength Envelope')
+
+    plt.xlabel("Time (s)")
+    plt.tight_layout()
+    plt.savefig(save_path)
+    plt.close()
 
 def show_preprocessed_mel(mel, sr=16000, hop_length=512):
     plt.figure(figsize=(6, 3))
@@ -26,17 +67,56 @@ def show_preprocessed_mel(mel, sr=16000, hop_length=512):
 
 def get_audio_array(input_path, output_path, target_sr=16000):
     y, sr = librosa.load(input_path, sr=target_sr, mono=True)
-    y_denoised = nr.reduce_noise(y=y, sr=sr)
+    y = nr.reduce_noise(y=y, sr=sr)
     # print(len(y_denoised))
-    sf.write(output_path, y_denoised, target_sr)
+    sf.write(output_path, y, target_sr)
+
+def filter_by_energy(y, sr, onsets, threshold=0.01, frame_length=2048, hop_length=512):
+    rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length).flatten()
+    times = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=hop_length)
+    valid_onsets = []
+
+    for t in onsets:
+        idx = np.searchsorted(times, t)
+        if idx < len(rms) and rms[idx] > threshold:
+            valid_onsets.append(t)
+
+    return np.array(valid_onsets)
+
+def filter_low_energy_onsets(y, sr, onsets, hop_length=256, frame_length=2048, rms_threshold=0.012):
+    rms = librosa.feature.rms(y=y, frame_length=frame_length, hop_length=hop_length).flatten()
+    times = librosa.frames_to_time(np.arange(len(rms)), sr=sr, hop_length=hop_length)
+    
+    filtered = []
+    for t in onsets:
+        idx = np.searchsorted(times, t)
+        if idx < len(rms) and rms[idx] >= rms_threshold:
+            filtered.append(t)
+    return np.array(filtered)
 
 def detect_onsets(wav_path):
     y, sr = librosa.load(wav_path, sr=16000)
-    onsets = librosa.onset.onset_detect(y=y, sr=sr, units='time', backtrack=True)
-    # print(onsets)
+
+    hop_length = 256
+    onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=hop_length)
+
+    onsets = librosa.onset.onset_detect(
+        onset_envelope=onset_env,
+        sr=sr,
+        hop_length=hop_length,
+        units='time',
+        backtrack=False,       # keeps it from jumping early
+        pre_max=3,
+        post_max=3,
+        pre_avg=8,
+        post_avg=8,
+        delta=0.05,            # reduced threshold: catch all strong peaks
+        wait=1                 # allow very quick notes (good for riffs)
+    )
+
     return onsets
 
-def remove_duplicate_onsets(onsets, min_gap=0.05):
+def remove_duplicate_onsets(onsets, min_gap=0.025):
     filtered = []
     last = -np.inf
     for t in onsets:
@@ -81,11 +161,20 @@ def predict_from_audio(input_audio_path, model):
     temp_wav = "backend\\temporary_audio_files\\temp.wav"
     get_audio_array(input_audio_path, temp_wav)
     y, sr = librosa.load(temp_wav, sr=16000)
+
     onsets = detect_onsets(temp_wav)
-    onsets = remove_duplicate_onsets(onsets)
+
+    mean_rms = np.mean(librosa.feature.rms(y=y).flatten())
+    threshold = 0.3 * mean_rms
+    onsets = filter_low_energy_onsets(y, sr, onsets, rms_threshold=threshold)
+
+    onsets = remove_duplicate_onsets(onsets, min_gap=0.07)
+
+
     segments = extract_segments(y, sr, onsets)
     if len(segments) == 0:
-        return [],[]
+        return [], [], [], []
+
     mels = [audio_to_mel(seg, sr) for seg in segments]
     mels = np.array(mels)[..., np.newaxis]  # shape (N, 128, 24, 1)
 
@@ -143,6 +232,7 @@ def detect_note_durations_and_velocities(audio, sr, onsets, pitches, max_duratio
 
 def generate_midi(file_path, model, output_dir="midi_output", program=0):
     y, sr, pitches, onsets = predict_from_audio(file_path, model)
+    plot_onset_diagnostics(y,sr,onsets)
     durations, velocities = detect_note_durations_and_velocities(y, sr, onsets, pitches)
 
     pm = pretty_midi.PrettyMIDI()
