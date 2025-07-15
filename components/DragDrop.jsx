@@ -18,19 +18,24 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
   const handleDragOver = (e) => {
     e.preventDefault();
   };
- useEffect(() => {
+
+  useEffect(() => {
   const fetch = async () => {
     if (audioFiles && audioFiles.length > 0) {
       setIsFileGiven(true);
       setIsProcessing(true);
 
-      const midiUrl = await Upload(audioFiles?[0]:null, setIsProcessing);
-      setAudioData(midiUrl);
+      const handleUpload = async () => {
+        const midiUrl = await Upload(audioFiles[0], setIsProcessing);
+        setAudioData(midiUrl);
+      };
+
+      await handleUpload();
     }
   };
 
-  fetch(); // ✅ call once
-}, [audioFiles]);
+  fetch();
+  }, [audioFiles]);
 
 
   return (
