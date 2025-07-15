@@ -18,7 +18,7 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
   const handleDragOver = (e) => {
     e.preventDefault();
   };
-  useEffect(async () => {
+  useEffect(() => async function fetch(){
     if (audioFiles && audioFiles.length > 0) {
       setIsFileGiven(true);
       setIsProcessing(true);
@@ -30,6 +30,7 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
 
       await handleUpload(audioFiles?[0]:null , setIsProcessing);
     }
+    fetch();
   }, [audioFiles]);
 
   return (
