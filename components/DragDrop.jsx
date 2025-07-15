@@ -1,6 +1,6 @@
 import { useState  , useEffect} from "react";
 import Upload from "../utils/upload.js";
-
+import { AudioInput } from "../utils/Audio.js";
 const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles , audioData , setAudioData}) => {
 
   const handleDrop = (e) => {
@@ -18,7 +18,7 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
   const handleDragOver = (e) => {
     e.preventDefault();
   };
-  useEffect(() => {
+  useEffect(async () => {
     if (audioFiles && audioFiles.length > 0) {
       setIsFileGiven(true);
       setIsProcessing(true);
@@ -28,7 +28,7 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
         setAudioData(midiUrl);
       };
 
-      handleUpload();
+      await handleUpload(audioFiles?[0]:null , setIsProcessing);
     }
   }, [audioFiles]);
 
