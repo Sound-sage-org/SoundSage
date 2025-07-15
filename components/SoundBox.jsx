@@ -1,16 +1,8 @@
 import { useState, useEffect } from "react";
 
-const SoundBox = () => {
+const SoundBox = ({LIGHTARR}) => {
   const midiPitches = [];
   const pitchNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const [lightenup, setLightenUp] = useState([]);
-
-  const LIGHTARR = [
-    ['C-1', 'F-1', 'F#-1'],
-    ['D-1', 'D#-1', 'G-1'],
-    ['F-1', 'C-1', 'D#-1']
-  ];
-
   // Generate 88 piano pitches from MIDI note 0
   for (let i = 0; i < 88; i++) {
     const octave = Math.floor(i / 12) - 1;

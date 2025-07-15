@@ -38,12 +38,26 @@ async function getValidSamplerUrls(baseUrl) {
   return urls;
 }
 
-export const AudioInput = async (midiUrl , instrument) => {
+export const AudioInput = async (midiUrl , instrument , setLIGHTARR) => {
     const fullUrl = `http://localhost:8000${midiUrl}`;
     const response = await fetch(fullUrl);
     const arrayBuffer = await response.arrayBuffer();
     const midi = new Midi(arrayBuffer);
     console.log(midi)
+    const song_arr = midi.tracks.map((track) => {
+        return track.notes.map((note) => {
+            return {
+                time: note.time,
+                duration: note.duration,
+                pitch: note.name,
+                velocity: note.velocity
+            };
+        });
+    }).flat();
+    console.log(song_arr);
+    song_arr.forEach((note) => {
+        const pitch = note.pitch;
+    });
     const Instrument = instrument == "Select an option" ? "acoustic_grand_piano" : instrument;
     const Sampler = new Tone.Sampler({
         urls: getValidSamplerUrls(`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}-mp3/`),
@@ -51,6 +65,12 @@ export const AudioInput = async (midiUrl , instrument) => {
         release:1
     }).toDestination();
     Tone.loaded().then(()=>{
-        console.log("wow")
+        song_arr.forEach((note) => {
+            const time = note.time;
+            const duration = note.duration;
+            const pitch = note.pitch;
+            const velocity = note.velocity;
+            Sampler.triggerAttackRelease(pitch, duration, time, velocity);
+        });
     })
 };

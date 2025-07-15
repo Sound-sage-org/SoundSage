@@ -6,16 +6,17 @@ import { AudioInput } from "../utils/Audio.js"
 
 
 const Output  =  ({instrument , setInstrument , audioData})=>{
+    const [LIGHTARR, setLIGHTARR] = useState([]);
     return(
         <div className="flex justify-between items-center h-100   p-2 mt-5 w-screen">
                 <div className="w-[55%] h-full bg-gray-300  overflow-y-scroll overflow-x-scroll  border-1 custom-scrollbar  rounded-xl">
-                    <SoundBox/>
+                    <SoundBox LIGHTARR={LIGHTARR}/>
                 </div>
                 <div className="flex justify-center h-96">
                     <DropDown instrument = {instrument} setInstrument = {setInstrument}/>
                 </div>
                 <button onClick={async ()=>{
-                          await AudioInput(audioData , instrument)
+                          await AudioInput(audioData , instrument , setLIGHTARR)
                 }}>CLICK ME</button>
         </div>
     )
