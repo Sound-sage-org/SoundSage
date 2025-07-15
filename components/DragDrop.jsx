@@ -1,6 +1,5 @@
 import { useState  , useEffect} from "react";
 import Upload from "../utils/upload.js";
-import { AudioInput } from "../utils/Audio.js";
 const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles , audioData , setAudioData}) => {
 
   const handleDrop = (e) => {
@@ -35,7 +34,7 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
   };
 
   fetch();
-  }, [audioFiles]);
+  }, [audioFiles]);
 
 
   return (

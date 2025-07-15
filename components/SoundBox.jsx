@@ -1,68 +1,130 @@
-import { useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
 
-const SoundBox = ({LIGHTARR}) => {
+const pitchNames = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
+
+const SoundBox = ({ LIGHTARR, sampler }) => {
+  const containerRef = useRef(null);
+  const scrollRef = useRef(null);
+  const played = useRef(new Set());
+
+  const [startTime, setStartTime] = useState(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const pixelsPerSecond = 60;
+  const keyHeight = 20;
+  const timelinePadding = 2; // seconds of empty space before notes start
+
   const midiPitches = [];
-  const pitchNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  const [lightenup, setLightenUp] = useState([]);
-  // Generate 88 piano pitches from MIDI note 0
-  for (let i = 0; i < 88; i++) {
+  for (let i = 21; i <= 108; i++) {
     const octave = Math.floor(i / 12) - 1;
     const note = pitchNames[i % 12];
-    midiPitches[i] = {
-      name: `${note}${octave}`,
-      number: i
-    };
+    midiPitches.push({ name: `${note}${octave}`, number: i });
   }
 
-  useEffect(() => {
-  if (!LIGHTARR || LIGHTARR.length === 0) return;
+  const totalDuration = Math.max(...LIGHTARR.map(n => n.time + n.duration / 1000)) + timelinePadding;
+  const contentWidth = totalDuration * pixelsPerSecond + 200;
 
-  const timeouts = [];
-
-  let currentTime = 0;
-
-  LIGHTARR.forEach((ele) => {
-    // Schedule the light-up
-    const onTimeout = setTimeout(() => {
-      setLightenUp((prev) => [...prev, ele.name]);
-
-      // Schedule light-down
-      const offTimeout = setTimeout(() => {
-        setLightenUp((prev) => prev.filter((n) => n !== ele.name));
-      }, ele.duration);
-
-      timeouts.push(offTimeout);
-    }, currentTime);
-
-    timeouts.push(onTimeout);
-    currentTime += ele.duration;
-  });
-
-  return () => {
-    timeouts.forEach(clearTimeout);
+  const playNote = (note) => {
+    if (sampler) {
+      sampler.triggerAttackRelease(note.name, "8n", undefined, note.velocity || 0.8);
+    }
   };
-}, [LIGHTARR]);
-  return (
-    <div className="rounded-xl">
-      <ul className="w-full">
-        {midiPitches.map((ele, idx) => (
-          <li
-            key={idx}
-            className={`w-full h-10 border border-gray-500 flex items-center ${
-              lightenup.includes(ele.name) ? 'bg-red-300' : ''
-            }`}
-          >
-            {/* Left note display with a line */}
-            <div className="w-28  pl-2">
-              {ele.name} ({ele.number})
-              {/* <div className="absolute top-1 bottom-1 right-0 w-[2px] h-10 bg-black"></div> */}
-            </div>
 
-            {/* Space for additional data */}
-            <div className="flex-1 pl-2 h-5"> </div>
-          </li>
-        ))}
-      </ul>
+  useEffect(() => {
+    if (containerRef.current) {
+      setContainerWidth(containerRef.current.clientWidth);
+    }
+    setStartTime(performance.now());
+    played.current.clear();
+  }, [LIGHTARR]);
+
+  useEffect(() => {
+    if (!startTime) return;
+
+    const animate = () => {
+      const now = performance.now();
+      const elapsed = now - startTime;
+      const playheadX = (elapsed / 1000) * pixelsPerSecond;
+
+      const fixedPlayheadX = containerWidth * 0.7;
+      if (playheadX > fixedPlayheadX && scrollRef.current) {
+        scrollRef.current.scrollLeft = playheadX - fixedPlayheadX;
+      }
+
+      for (const note of LIGHTARR) {
+        const startX = (note.time + timelinePadding) * pixelsPerSecond;
+        const endX = startX + (note.duration * pixelsPerSecond) / 1000;
+
+        if (
+          playheadX >= startX &&
+          playheadX <= endX &&
+          !played.current.has(note)
+        ) {
+          played.current.add(note);
+          playNote(note);
+        }
+      }
+
+      requestAnimationFrame(animate);
+    };
+
+    requestAnimationFrame(animate);
+  }, [startTime, containerWidth]);
+
+  return (
+    <div ref={containerRef} className="relative h-[1760px] border rounded-xl bg-white overflow-hidden">
+      {/* Playhead fixed visually at 70% */}
+      <div
+        className="absolute top-0 bottom-0 w-[2px] bg-blue-600 z-50 pointer-events-none"
+        style={{ left: `${containerWidth * 0.7}px` }}
+      />
+
+      <div
+        ref={scrollRef}
+        className="w-full h-full overflow-x-scroll overflow-y-hidden"
+      >
+        <div
+          className="relative"
+          style={{
+            width: `${contentWidth}px`,
+            height: `${88 * keyHeight}px`,
+          }}
+        >
+          {/* True time=0 indicator (vertical bar) */}
+          <div className="absolute top-0 bottom-0 w-[2px] bg-gray-400" style={{ left: 0 }} />
+
+          {midiPitches.map((pitch, idx) => {
+            const y = idx * keyHeight;
+            const rowNotes = LIGHTARR.filter(n => n.name === pitch.name);
+
+            return (
+              <div
+                key={pitch.name}
+                className="absolute w-full border-b border-gray-200 flex items-center"
+                style={{ top: y, height: keyHeight }}
+              >
+                <div className="w-24 pl-2 text-sm text-gray-600 font-mono">{pitch.name}</div>
+
+                {rowNotes.map((note, i) => {
+                  const left = (note.time + timelinePadding) * pixelsPerSecond;
+                  const width = (note.duration * pixelsPerSecond) / 1000;
+
+                  return (
+                    <div
+                      key={i}
+                      className="absolute h-4 bg-red-400 rounded-sm top-1/2 -translate-y-1/2"
+                      style={{
+                        left: `${left}px`,
+                        width: `${width}px`,
+                      }}
+                    />
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

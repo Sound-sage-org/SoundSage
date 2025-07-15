@@ -1,27 +1,19 @@
 import * as Tone from "tone";
 import { Midi } from "@tonejs/midi";
-const NOTE_NAMES = ["A0",
-                    "C1", "Eb1", "Gb1", "A1",
-                    "C2", "Eb2", "Gb2", "A2",
-                    "C3", "Eb3", "Gb3", "A3",
-                    "C4", "Eb4", "Gb4", "A4", 
-                    "C5", "Eb5", "Gb5", "A5",
-                    "C6", "Eb6", "Gb6", "A6",
-                    "C7", "Eb7", "Gb7", "A7",
-                    "C8"];
-// const notes = ["C0", "D#0", "F#0", "A0",
-//                 "C1", "D#1", "F#1", "A1",
-//                 "C2", "D#2", "F#2", "A2",
-//                 "C3", "D#3", "F#3", "A3",
-//                 "C4", "D#4", "F#4", "A4", 
-//                 "C5", "D#5", "F#5", "A5",
-//                 "C6", "D#6", "F#6", "A6",
-//                 "C7"];
 
+const NOTE_NAMES = [
+  "A0", "C1", "Eb1", "Gb1", "A1",
+  "C2", "Eb2", "Gb2", "A2",
+  "C3", "Eb3", "Gb3", "A3",
+  "C4", "Eb4", "Gb4", "A4",
+  "C5", "Eb5", "Gb5", "A5",
+  "C6", "Eb6", "Gb6", "A6",
+  "C7", "Eb7", "Gb7", "A7",
+  "C8"
+];
 
 async function getValidSamplerUrls(baseUrl) {
   const urls = {};
-
   for (const note of NOTE_NAMES) {
     const filename = `${note}.mp3`;
     const fullUrl = `${baseUrl}${filename}`;
@@ -31,55 +23,50 @@ async function getValidSamplerUrls(baseUrl) {
         urls[note] = filename;
       }
     } catch {
-      console.log("error loading file");
+      console.warn(`Failed to load: ${filename}`);
     }
   }
-//   console.log(urls);
   return urls;
 }
 
-export const AudioInput = async (midiUrl , instrument , setLIGHTARR) => {
-    const fullUrl = `http://localhost:8000${midiUrl}`;
-    const response = await fetch(fullUrl);
-    const arrayBuffer = await response.arrayBuffer();
-    const midi = new Midi(arrayBuffer);
-    console.log(midi)
-    const song_arr = midi.tracks.map((track) => {
-        return track.notes.map((note) => {
-            return {
-                time: note.time,
-                duration: note.duration,
-                pitch: note.name,
-                velocity: note.velocity
-            };
-        });
-    }).flat();
-    console.log(song_arr);
-    song_arr.forEach((note) => {
-        const pitch = note.pitch;
-        setLIGHTARR((prev) => {
-            if (!prev.includes(pitch)) {
-                return [...prev, {name: pitch, duration: note.duration*1000}];
-            }
-            return prev;
-        })
-    });
-    const Instrument = instrument == "Select an option" ? "acoustic_grand_piano" : instrument;
-    const urls = await getValidSamplerUrls(`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}-mp3/`)
-    const Sampler = new Tone.Sampler({
-        urls: urls,
-        baseUrl:`https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}-mp3/`,
-        release:1
-    }).toDestination();
+export const loadAndPlayMidi = async (midiUrl, instrument, setLIGHTARR, setSampler, setStartTime) => {
+  const fullUrl = `http://localhost:8000${midiUrl}`;
+  const response = await fetch(fullUrl);
+  const arrayBuffer = await response.arrayBuffer();
+  const midi = new Midi(arrayBuffer);
 
-    const now = Tone.now()
-    Tone.loaded().then(()=>{
-        song_arr.forEach((note) => {
-            const time = note.time;
-            const duration = note.duration;
-            const pitch = note.pitch;
-            const velocity = note.velocity;
-            Sampler.triggerAttackRelease(pitch, duration, now+time, velocity);
-        });
-    })
+  const songArr = midi.tracks.flatMap(track =>
+    track.notes.map(note => ({
+      time: note.time,
+      duration: note.duration,
+      pitch: note.name,
+      velocity: note.velocity
+    }))
+  );
+
+  setLIGHTARR(songArr.map(note => ({
+    name: note.pitch,
+    duration: note.duration * 1000,
+    time: note.time,
+  })));
+
+  const Instrument = instrument === "Select an option" ? "acoustic_grand_piano" : instrument;
+  const baseUrl = `https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${Instrument}-mp3/`;
+  const urls = await getValidSamplerUrls(baseUrl);
+
+  const sampler = new Tone.Sampler({
+    urls,
+    baseUrl,
+    release: 1,
+  }).toDestination();
+
+  await Tone.loaded();
+
+  setSampler(sampler);
+  const now = Tone.now();
+  setStartTime(performance.now());
+
+  songArr.forEach(note => {
+    sampler.triggerAttackRelease(note.pitch, note.duration, now + note.time, note.velocity);
+  });
 };
