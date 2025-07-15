@@ -57,6 +57,12 @@ export const AudioInput = async (midiUrl , instrument , setLIGHTARR) => {
     console.log(song_arr);
     song_arr.forEach((note) => {
         const pitch = note.pitch;
+        setLIGHTARR((prev) => {
+            if (!prev.includes(pitch)) {
+                return [...prev, {name: pitch, duration: note.duration}];
+            }
+            return prev;
+        })
     });
     const Instrument = instrument == "Select an option" ? "acoustic_grand_piano" : instrument;
     const Sampler = new Tone.Sampler({

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 const SoundBox = ({LIGHTARR}) => {
   const midiPitches = [];
   const pitchNames = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+  const [lightenup, setLightenUp] = useState([]);
   // Generate 88 piano pitches from MIDI note 0
   for (let i = 0; i < 88; i++) {
     const octave = Math.floor(i / 12) - 1;
@@ -14,14 +15,33 @@ const SoundBox = ({LIGHTARR}) => {
   }
 
   useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      setLightenUp(LIGHTARR[index]);
-      index = (index + 1) % LIGHTARR.length;
-    }, 1000);
+  if (!LIGHTARR || LIGHTARR.length === 0) return;
 
-    return () => clearInterval(interval);
-  }, []);
+  const timeouts = [];
+
+  let currentTime = 0;
+
+  LIGHTARR.forEach((ele) => {
+    // Schedule the light-up
+    const onTimeout = setTimeout(() => {
+      setLightenUp((prev) => [...prev, ele.name]);
+
+      // Schedule light-down
+      const offTimeout = setTimeout(() => {
+        setLightenUp((prev) => prev.filter((n) => n !== ele.name));
+      }, ele.duration);
+
+      timeouts.push(offTimeout);
+    }, currentTime);
+
+    timeouts.push(onTimeout);
+    currentTime += ele.duration;
+  });
+
+  return () => {
+    timeouts.forEach(clearTimeout);
+  };
+}, [LIGHTARR]);
   return (
     <div className="rounded-xl">
       <ul className="w-full">
