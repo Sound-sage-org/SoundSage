@@ -19,7 +19,7 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
   const timelinePadding = 1;
   const playheadPosition = 0.2; // 20% of screen width for playhead position
 
-  // Generate MIDI pitches (21-108 covers 88 piano keys)
+  // Generate MIDI pitches (21-108 covers 88 piano keys, from C8 to A0)
   const midiPitches = [];
   for (let i = 108; i >= 21; i--) {
     const octave = Math.floor(i / 12) - 1;
@@ -31,6 +31,7 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
     ? Math.max(...LIGHTARR.map(n => n.time + n.duration / 1000)) + 2
     : 10;
   const contentWidth = Math.max(totalDuration * pixelsPerSecond, containerWidth);
+  const totalHeight = midiPitches.length * keyHeight; // Total height for all keys
 
   const stopAllNotes = () => {
     // Stop all currently playing notes
@@ -249,42 +250,69 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
         <div className="flex h-full">
           {/* Piano Keys (Fixed Left Panel) */}
           <div className="w-20 bg-gray-800 flex-shrink-0 border-r border-gray-600 z-40">
-            {midiPitches.map((pitch, idx) => (
-              <div
-                key={pitch.name}
-                className={`flex items-center justify-center text-xs font-mono border-b border-gray-600 cursor-pointer transition-colors ${
-                  isBlackKey(pitch.name) 
-                    ? 'bg-gray-700 text-white hover:bg-gray-600' 
-                    : 'bg-gray-200 text-black hover:bg-gray-300'
-                }`}
-                style={{ height: keyHeight }}
-                onClick={() => {
-                  if (sampler) {
-                    sampler.triggerAttackRelease(pitch.name, "8n");
-                  }
-                }}
-              >
-                {pitch.name}
+            {/* Time ruler spacer to align with timeline */}
+            <div className="h-6 bg-gray-700 border-b border-gray-600"></div>
+            
+            {/* Scrollable keys container */}
+            <div 
+              className="overflow-y-auto overflow-x-hidden"
+              style={{ 
+                height: `calc(100% - 24px)`, // Account for time ruler height
+                scrollbarWidth: 'none'
+              }}
+              onScroll={(e) => {
+                // Sync scroll with timeline
+                if (scrollRef.current) {
+                  scrollRef.current.scrollTop = e.target.scrollTop;
+                }
+              }}
+            >
+              <div style={{ height: totalHeight }}>
+                {midiPitches.map((pitch, idx) => (
+                  <div
+                    key={pitch.name}
+                    className={`flex items-center justify-center text-xs font-mono border-b border-gray-600 cursor-pointer transition-colors ${
+                      isBlackKey(pitch.name) 
+                        ? 'bg-gray-700 text-white hover:bg-gray-600' 
+                        : 'bg-gray-200 text-black hover:bg-gray-300'
+                    }`}
+                    style={{ height: keyHeight }}
+                    onClick={() => {
+                      if (sampler) {
+                        sampler.triggerAttackRelease(pitch.name, "8n");
+                      }
+                    }}
+                  >
+                    {pitch.name}
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
           </div>
 
           {/* Scrollable Timeline */}
           <div
             ref={scrollRef}
-            className="flex-1 overflow-x-auto overflow-y-hidden"
+            className="flex-1 overflow-auto"
             style={{ scrollbarWidth: 'thin' }}
+            onScroll={(e) => {
+              // Sync vertical scroll with piano keys
+              const pianoKeysContainer = e.target.parentElement.querySelector('.w-20 > div:last-child');
+              if (pianoKeysContainer) {
+                pianoKeysContainer.scrollTop = e.target.scrollTop;
+              }
+            }}
           >
             <div
               className="relative bg-gray-800 cursor-crosshair"
               style={{
                 width: `${contentWidth}px`,
-                height: `${88 * keyHeight}px`,
+                height: `${totalHeight + 24}px`, // Add space for time ruler
               }}
               onClick={handleTimelineClick}
             >
               {/* Time ruler */}
-              <div className="absolute top-0 left-0 right-0 h-6 bg-gray-700 border-b border-gray-600 z-30">
+              <div className="sticky top-0 left-0 right-0 h-6 bg-gray-700 border-b border-gray-600 z-30">
                 {Array.from({ length: Math.ceil(totalDuration) + 1 }).map((_, i) => (
                   <div
                     key={i}
@@ -303,8 +331,11 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
                 {Array.from({ length: Math.ceil(totalDuration * 4) }).map((_, i) => (
                   <div
                     key={i}
-                    className={`absolute top-0 bottom-0 ${i % 4 === 0 ? 'w-px bg-gray-600' : 'w-px bg-gray-700'}`}
-                    style={{ left: `${(i * pixelsPerSecond) / 4}px` }}
+                    className={`absolute top-0 ${i % 4 === 0 ? 'w-px bg-gray-600' : 'w-px bg-gray-700'}`}
+                    style={{ 
+                      left: `${(i * pixelsPerSecond) / 4}px`,
+                      height: `${totalHeight}px`
+                    }}
                   />
                 ))}
                 
@@ -358,10 +389,11 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
 
               {/* Moving Playhead (in timeline) */}
               <div
-                className="absolute top-0 bottom-0 w-0.5 bg-yellow-400 opacity-80 z-20 pointer-events-none"
+                className="absolute w-0.5 bg-yellow-400 opacity-80 z-20 pointer-events-none"
                 style={{ 
                   left: `${getCurrentPlayheadX()}px`,
-                  top: '24px'
+                  top: '24px',
+                  height: `${totalHeight}px`
                 }}
               />
             </div>

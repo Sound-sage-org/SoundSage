@@ -34,3 +34,5 @@ midi_output
 backend/__pycache__
 
 plots/
+
+components/temp.jsx

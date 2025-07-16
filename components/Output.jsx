@@ -124,34 +124,6 @@ const Output = ({ instrument, setInstrument, audioData }) => {
 
   return (
     <div className="flex flex-col h-full p-4 bg-gray-100">
-      {/* Header with controls */}
-      <div className="flex justify-between items-center mb-4 p-4 bg-white rounded-lg shadow-md">
-        <div className="flex items-center gap-4">
-          <h2 className="text-xl font-bold text-gray-800">Piano Roll</h2>
-          <div className="text-sm text-gray-600">
-            {isLoadingMidi ? "Loading MIDI..." : `${LIGHTARR.length} notes loaded`}
-          </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-600">
-            <span className="font-medium">Instrument:</span> {getInstrumentDisplayName()}
-            {isLoadingSampler && <span className="text-blue-500 ml-2">Loading...</span>}
-          </div>
-          
-          <button 
-            onClick={handleManualPlay}
-            disabled={!sampler || isLoadingSampler}
-            className={`px-4 py-2 rounded-md font-medium transition-colors ${
-              !sampler || isLoadingSampler
-                ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                : 'bg-blue-600 hover:bg-blue-700 text-white'
-            }`}
-          >
-            Test Sound
-          </button>
-        </div>
-      </div>
 
       {/* Main content area */}
       <div className="flex flex-1 gap-4 h-full overflow-hidden">
