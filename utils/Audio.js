@@ -1,5 +1,6 @@
 import * as Tone from "tone";
 import { Midi } from "@tonejs/midi";
+import { NavItem } from "react-bootstrap";
 
 const NOTE_NAMES = [
   "A0", "C1", "Eb1", "Gb1", "A1",
@@ -11,6 +12,15 @@ const NOTE_NAMES = [
   "C7", "Eb7", "Gb7", "A7",
   "C8"
 ];
+const noteNext = {
+  "A":"B",
+  "B":"C",
+  "C":"D",
+  "D":"E",
+  "E":"F",
+  "F":"G",
+  "G":"A"
+};
 
 async function getValidSamplerUrls(baseUrl) {
   const urls = {};
@@ -31,7 +41,7 @@ async function getValidSamplerUrls(baseUrl) {
 
 // Create sampler for specific instrument
 export const createSampler = async (instrument = "acoustic_grand_piano") => {
-  const instrumentName = instrument === "Select an option" ? "acoustic_grand_piano" : instrument;
+  const instrumentName = instrument === "Select Instrument" ? "acoustic_grand_piano" : instrument;
   const baseUrl = `https://gleitz.github.io/midi-js-soundfonts/FluidR3_GM/${instrumentName}-mp3/`;
   
   try {
@@ -53,7 +63,12 @@ export const createSampler = async (instrument = "acoustic_grand_piano") => {
     return null;
   }
 };
-
+const getnotenameparsed = (name)=>{
+  if(name.length !== 3) return name
+  else{
+    return noteNext[name[0]]+"b"+name[2]
+  } 
+}
 // Parse MIDI file and extract note data
 export const parseMidiFile = async (midiUrl) => {
   try {
@@ -66,7 +81,7 @@ export const parseMidiFile = async (midiUrl) => {
       track.notes.map(note => ({
         time: note.time,
         duration: note.duration * 1000, // Convert to milliseconds
-        name: note.name,
+        name: getnotenameparsed(note.name),
         pitch: note.name,
         velocity: note.velocity,
         midi: note.midi
@@ -96,7 +111,7 @@ export const loadAndPlayMidi = async (midiUrl, instrument, setLIGHTARR, setSampl
     const sampler = await createSampler(instrument);
     setSampler(sampler);
 
-    console.log(`Loaded ${songArr.length} notes for instrument: ${instrument}`);
+    //console.log(`Loaded ${songArr.length} notes for instrument: ${instrument}`);
     
     return { songArr, sampler };
   } catch (error) {

@@ -19,7 +19,7 @@ const Output = ({ instrument, setInstrument, audioData }) => {
       try {
         const songArr = await parseMidiFile(audioData);
         setLIGHTARR(songArr);
-        console.log(`Loaded ${songArr.length} notes from MIDI file`);
+        //console.log(`Loaded ${songArr.length} notes from MIDI file`);
       } catch (error) {
         console.error("Error loading MIDI data:", error);
         setLIGHTARR([]);
@@ -34,7 +34,7 @@ const Output = ({ instrument, setInstrument, audioData }) => {
   // Create/update sampler when instrument changes
   useEffect(() => {
     const loadSampler = async () => {
-      if (!instrument || instrument === "Select an option") return;
+      if (!instrument || instrument === "Select Instrument") return;
       
       setIsLoadingSampler(true);
       try {
@@ -50,7 +50,7 @@ const Output = ({ instrument, setInstrument, audioData }) => {
 
         const newSampler = await createSampler(instrument);
         setSampler(newSampler);
-        console.log(`Sampler loaded for instrument: ${instrument}`);
+        //console.log(`Sampler loaded for instrument: ${instrument}`);
       } catch (error) {
         console.error("Error loading sampler:", error);
         setSampler(null);
@@ -74,7 +74,7 @@ const Output = ({ instrument, setInstrument, audioData }) => {
           
           const defaultSampler = await createSampler("acoustic_grand_piano");
           setSampler(defaultSampler);
-          console.log("Default sampler (acoustic_grand_piano) loaded");
+          //console.log("Default sampler (acoustic_grand_piano) loaded");
         } catch (error) {
           console.error("Error loading default sampler:", error);
         } finally {
@@ -109,7 +109,7 @@ const Output = ({ instrument, setInstrument, audioData }) => {
 
       // Play a test note
       sampler.triggerAttackRelease("C4", "8n");
-      console.log("Manual play triggered");
+      //console.log("Manual play triggered");
     } catch (error) {
       console.error("Error in manual play:", error);
     }
@@ -123,12 +123,12 @@ const Output = ({ instrument, setInstrument, audioData }) => {
   };
 
   return (
-    <div className="flex flex-col h-full p-4 bg-gray-100">
+    <div className="flex flex-col h-full mt-8 mx-4">
 
       {/* Main content area */}
       <div className="flex flex-1 gap-4 h-full overflow-hidden">
         {/* Piano Roll */}
-        <div className="flex-1 bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="h-[394px] flex-1 rounded-lg shadow-md overflow-hidden mb-4">
           <SoundBox 
             LIGHTARR={LIGHTARR} 
             sampler={sampler}
@@ -137,11 +137,21 @@ const Output = ({ instrument, setInstrument, audioData }) => {
 
         {/* Instrument Selector */}
         <div className="w-80 flex-shrink-0">
-          <div className="bg-white rounded-lg shadow-md p-4 h-full">
-            <h3 className="text-lg font-semibold mb-4 text-gray-800">Select Instrument</h3>
+          <div className="flex-col rounded-lg shadow-md h-full">
+            {audioData && (
+              <a 
+                href={`http://localhost:8000${audioData}`} 
+                download="converted.mid" 
+                className="pt-1 text-center mb-2 inline-block bg-green-600 text-white rounded hover:bg-green-700 transition h-[35px] w-[320px]"
+              >
+                ⬇ Download MIDI
+              </a>
+            )}
+
             <DropDown 
               instrument={instrument} 
               setInstrument={setInstrument} 
+              setSampler={setSampler}
             />
             
             {/* Loading indicator */}
@@ -152,26 +162,6 @@ const Output = ({ instrument, setInstrument, audioData }) => {
               </div>
             )}
             
-            {/* Sampler status */}
-            <div className="mt-4 p-3 bg-gray-50 rounded-md">
-              <div className="text-sm">
-                <div className="flex justify-between items-center">
-                  <span className="font-medium">Status:</span>
-                  <span className={`px-2 py-1 rounded text-xs ${
-                    sampler && !isLoadingSampler 
-                      ? 'bg-green-100 text-green-800' 
-                      : 'bg-yellow-100 text-yellow-800'
-                  }`}>
-                    {sampler && !isLoadingSampler ? 'Ready' : 'Loading'}
-                  </span>
-                </div>
-                {sampler && (
-                  <div className="mt-2 text-xs text-gray-600">
-                    Tone.js context: {Tone.context.state}
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
         </div>
       </div>

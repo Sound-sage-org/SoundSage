@@ -6,7 +6,7 @@ const DragDrop = ({setIsFileGiven , setIsProcessing , audioFiles , setAudioFiles
     e.preventDefault();
     const files = Array.from(e.dataTransfer.files);
     const audioOnly = files.filter(file => file.type.startsWith("audio/"));
-    console.log(files)
+    //console.log(files)
     if (audioOnly.length === 0) {
       return;
     }

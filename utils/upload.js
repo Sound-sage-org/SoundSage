@@ -13,7 +13,7 @@ const Upload = async (file, setIsProcessing) => {
     }
 
     const data = await res.json();
-    console.log("MIDI file URL:", data.midi_url);
+    //console.log("MIDI file URL:", data.midi_url);
 
     return data.midi_url;
   } catch (err) {

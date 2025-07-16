@@ -10,11 +10,11 @@ function App() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [audioFiles, setAudioFiles] = useState(null);
   const [audioData, setAudioData] = useState(null);
-  const [instrument, setInstrument] = useState('Select an option');
+  const [instrument, setInstrument] = useState('Select Instrument');
 
   if (!isProcessing && !isFileGiven) {
     return (
-      <div className="w-full p-0 mt-0">
+      <div className="w-screen p-0 mt-0">
         <Header />
         <div className="flex justify-center pt-20">
           <DragDrop
