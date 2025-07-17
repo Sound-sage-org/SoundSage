@@ -132,6 +132,7 @@ const Output = ({ instrument, setInstrument, audioData }) => {
           <SoundBox 
             LIGHTARR={LIGHTARR} 
             sampler={sampler}
+            setLIGHTARR = {setLIGHTARR}
           />
         </div>
 

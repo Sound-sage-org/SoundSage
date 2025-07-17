@@ -41,7 +41,7 @@ const instrumentMap = {
   "Xylophone": "xylophone",
   "Synth (Sawtooth)": "lead_2_sawtooth"
 };
-imageMap = {
+const imageMap = {
   "accordion": "https://example.com/accordion.png",
   "acoustic_bass": "https://example.com/acoustic_bass.png",
   "acoustic_grand_piano": "https://example.com/acoustic_grand_piano.png",

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 const pitchNames = ['C', 'Db', 'D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B'];
 
-const SoundBox = ({ LIGHTARR, sampler }) => {
+const SoundBox = ({ LIGHTARR, sampler,setLIGHTARR }) => {
   const containerRef = useRef(null);
   const scrollRef = useRef(null);
   const playedNotes = useRef(new Set());
@@ -15,7 +15,7 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
   const [startTime, setStartTime] = useState(null);
 
   const pixelsPerSecond = 100;
-  const keyHeight = 20;
+  const keyHeight = 14;
   const timelinePadding = 1;
   const playheadPosition = 0.2; // 20% of screen width for playhead position
 
@@ -106,7 +106,21 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
 
   useEffect(() => {
     if (containerRef.current) {
-      setContainerWidth(containerRef.current.clientWidth);
+      const width = containerRef.current.clientWidth;
+      setContainerWidth(width);
+
+      // Center C4 vertically on initial render
+      const c4Index = midiPitches.findIndex(p => p.name === 'C4');
+      if (c4Index !== -1 && scrollRef.current) {
+        const scrollTop = (c4Index * keyHeight) - (containerRef.current.clientHeight / 2) + (keyHeight / 2);
+        scrollRef.current.scrollTop = scrollTop;
+
+        // Also scroll the piano keys to match
+        const pianoKeysContainer = containerRef.current.querySelector('.w-20 > div:last-child');
+        if (pianoKeysContainer) {
+          pianoKeysContainer.scrollTop = scrollTop;
+        }
+      }
     }
 
     const handleResize = () => {
@@ -246,10 +260,10 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
       {/* Piano Roll */}
       <div ref={containerRef} className="flex-1 relative bg-gray-900 overflow-hidden">
         {/* Fixed Playhead */}
-        <div
+        {/* <div
           className="absolute top-0 bottom-0 w-0.5 bg-yellow-400 z-50 pointer-events-none shadow-lg"
           style={{ left: `${containerWidth * playheadPosition}px` }}
-        />
+        /> */}
 
         <div className="flex h-full">
           {/* Piano Keys (Fixed Left Panel) */}
@@ -363,7 +377,7 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
               <div className="absolute inset-0" style={{ top: '24px' }}>
                 {LIGHTARR && LIGHTARR.map((note, noteIdx) => {
                   const pitchIndex = midiPitches.findIndex(p => p.name === note.name);
-                  console.log(note, pitchIndex);
+                  // console.log(note, pitchIndex);
                   if (pitchIndex === -1) return null;
 
                   const left = note.time * pixelsPerSecond;
@@ -387,6 +401,11 @@ const SoundBox = ({ LIGHTARR, sampler }) => {
                         opacity: Math.max(0.6, note.velocity || 0.8),
                       }}
                       title={`${note.name} - ${(note.duration / 1000).toFixed(2)}s - Velocity: ${(note.velocity || 0.8).toFixed(2)}`}
+                      onContextMenu={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setLIGHTARR(prev => prev.filter(item => !(item.name === note.name && item.time === note.time)));
+                      }}
                     />
                   );
                 })}
