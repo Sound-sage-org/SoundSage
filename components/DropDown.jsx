@@ -41,7 +41,46 @@ const instrumentMap = {
   "Xylophone": "xylophone",
   "Synth (Sawtooth)": "lead_2_sawtooth"
 };
-
+imageMap = {
+  "accordion": "https://example.com/accordion.png",
+  "acoustic_bass": "https://example.com/acoustic_bass.png",
+  "acoustic_grand_piano": "https://example.com/acoustic_grand_piano.png",
+  "acoustic_guitar_steel": "https://example.com/acoustic_guitar_steel.png",
+  "banjo": "https://example.com/banjo.png",
+  "bagpipe": "https://example.com/bagpipe.png",
+  "brass_section": "https://example.com/brass_section.png",
+  "cello": "https://example.com/cello.png",
+  "choir_aahs": "https://example.com/choir_aahs.png",
+  "clarinet": "https://example.com/clarinet.png",
+  "church_organ": "https://example.com/church_organ.png",
+  "electric_bass_finger": "https://example.com/electric_bass_finger.png",
+  "electric_grand_piano": "https://example.com/electric_grand_piano.png",
+  "electric_guitar_clean": "https://example.com/electric_guitar_clean.png",
+  "electric_piano_1": "https://example.com/electric_piano_1.png",
+  "english_horn": "https://example.com/english_horn.png",
+  "flute": "https://example.com/flute.png",
+  "harmonica": "https://example.com/harmonica.png",
+  "glockenspiel": "https://example.com/glockenspiel.png",
+  "gunshot": "https://example.com/gunshot.png",
+  "koto": "https://example.com/koto.png",
+  "helicopter": "https://example.com/helicopter.png",
+  "kalimba": "https://example.com/kalimba.png",
+  "harpischord": "https://example.com/harpischord.png",
+  "marimba": "https://example.com/marimba.png",
+  "ocarina": "https://example.com/ocarina.png",
+  "seashore": "https://example.com/seashore.png",
+  "sitar": "https://example.com/sitar.png",
+  "shanai": "https://example.com/shanai.png",
+  "slap_bass_1": "https://example.com/slap_bass_1.png",
+  "soprano_sax": "https://example.com/soprano_sax.png",
+  "string_ensemble_1": "https://example.com/string_ensemble_1.png",
+  "trumpet": "https://example.com/trumpet.png",
+  "viola": "https://example.com/viola.png",
+  "violin": "https://example.com/violin.png",
+  "whistle": "https://example.com/whistle.png",
+  "xylophone": "https://example.com/xylophone.png",
+  "lead_2_sawtooth": "https://example.com/lead_2_sawtooth.png"
+};
 export default function InstrumentSelector({setInstrument , instrument, setSampler}) {
   return (
     <div className="w-[calc(100%)] border-2 h-[350px] mt-0 bg-gray-800 flex justify-center rounded-lg shadow-md overflow-y-scroll no-scrollbar">
@@ -71,6 +110,7 @@ export default function InstrumentSelector({setInstrument , instrument, setSampl
           ))}
 
         </Dropdown>
+        <img src={``}/>
       </div>
     </div>
   );
